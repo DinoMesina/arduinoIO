@@ -198,17 +198,17 @@ def sendAnalogOut(ch):
     bufW[5] = 0
     
     # get analog value of channel ch 
-    scale = c['analog-out-%02d-scale' % ch] or 1.0
-    offset = c['analog-out-%02d-offset' % ch]
-    data = (c['analog-out-%02d' % ch] - offset) / scale / (5.0)
+    scale = hc['analog-out-%02d-scale' % ch] or 1.0
+    offset = hc['analog-out-%02d-offset' % ch]
+    data = (hc['analog-out-%02d' % ch] - offset) / scale / (5.0)
     buf[2] = ch
     buf[3] = int(data * 255 + 0.5)
 
     if ((ch + 1) < nAnalogOut):
         # get analog value of channel (ch + 1)
-        scale = c['analog-out-%02d-scale' % (ch + 1)] or 1.0
-        offset = c['analog-out-%02d-offset' % (ch + 1)]
-        data = (c['analog-out-%02d' % (ch + 1)]- offset) / scale / (5.0)
+        scale = hc['analog-out-%02d-scale' % (ch + 1)] or 1.0
+        offset = hc['analog-out-%02d-offset' % (ch + 1)]
+        data = (hc['analog-out-%02d' % (ch + 1)]- offset) / scale / (5.0)
         buf[2] = ch + 1
         buf[3] = int(data * 255 + 0.5)
     # send to arduino
