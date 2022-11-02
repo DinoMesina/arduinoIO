@@ -37,8 +37,8 @@ nOutput = 3        # output pins available on arduino
 nAnalogIn = 6      # input analog pins available on arduino 
 nAnalogOut = 3     # output analog pins available on arduino 
 
-printDebug = False
-inLinuxCNC = True 
+printDebug = not False
+inLinuxCNC = not True 
 
 ACK   = 0b00000110 # ASCII ACK
 NACK  = 0b00010101 # ASCII NAK
@@ -57,7 +57,7 @@ if (inLinuxCNC):
     for n in range(nInput):
         hc.newpin("digital-in-%02d" % n, hal.HAL_BIT, hal.HAL_OUT)
         hc.newpin("digital-in-%02d-not" % n, hal.HAL_BIT, hal.HAL_OUT)
-        #hc.newparam("digital-in-%02d-pullup" % n, hal.HAL_BIT, hal.HAL_RW)
+        hc.newparam("digital-in-%02d-pullup" % n, hal.HAL_BIT, hal.HAL_RW)
     # digital out
     for n in range(nOutput):
         hc.newpin("digital-out-%02d" % n, hal.HAL_BIT, hal.HAL_IN)
@@ -67,12 +67,12 @@ if (inLinuxCNC):
         hc.newpin("analog-in-%02d" % n, hal.HAL_FLOAT, hal.HAL_OUT)
         hc.newparam("analog-in-%02d-offset" % n, hal.HAL_FLOAT, hal.HAL_RW)
         hc.newparam("analog-in-%02d-gain" % n, hal.HAL_FLOAT, hal.HAL_RW)
+        hc['analog-in-%02d-gain' % n] = 1.0
     # analog out
     for n in range(nAnalogOut):
         hc.newpin("analog-out-%02d" % n, hal.HAL_FLOAT, hal.HAL_IN)
         hc.newparam("analog-out-%02d-offset" % n, hal.HAL_FLOAT, hal.HAL_RW)
         hc.newparam("analog-out-%02d-scale" % n, hal.HAL_FLOAT, hal.HAL_RW)
-        hc['analog-in-%02d-gain' % n] = 1.0
         hc['analog-out-%02d-scale' % n] = 1.0
     # READY 
     hc.ready()
@@ -96,7 +96,7 @@ def writeBuffer():
             ser.write(b.to_bytes(1, byteorder='big'))
 
     # debug
-    if (printDebug):
+    if (not printDebug):
         print("W-->:", end='  ')
         for b in bufW:
             print(str("{0:0=8b}".format(b)), end='  ')
@@ -114,8 +114,8 @@ def setDigitalIn():
         for i in range(nInput):
             hc['digital-in-%02d' % i] = ((bits & (0x01 << i)) != 0)
             hc['digital-in-%02d-not' % i] = ((bits & (0x01 << i)) == 0)
-    else:
-        print("bits:", end=' ')
+    if (not printDebug):
+        print("DigitalOut:", end=' ')
         for i in range(nInput):
             print(((bits & (0x01 << i)) >> i), end='')
         print()
@@ -125,36 +125,46 @@ def setDigitalIn():
 def sendDigitalOut():
     # send pin map to arduino 
     bufW[0] = START
-    bufW[1] = (0b01)
-    # write outputs pin
-    bufW[5] = 0
-    bufW[4] = 0
-    bufW[3] = 0
-    bufW[2] = 0
-    if (nOutput >= 32):
-        for i in range(31,23,-1):
+    bufW[1] = 0x01
+    bufW[2] = 0x00
+    bufW[3] = 0x00
+    bufW[4] = 0x00
+    bufW[5] = 0x00
+    if (nOutput > 24):
+        for i in range(nOutput,23,-1):
             if ((hc['digital-out-%02d' % i]) == (not hc['digital-out-%02d-invert' % i])):
                 bufW[5] = (bufW[5] | (0x01 << (i - 24)))
             else:
                 bufW[5] = (bufW[5] & ~(0x01 << i))
-    if (nOutput >= 24):
-        for i in range(23,15,-1):
+    if (nOutput > 16):
+        if (nOutput <= 23):
+            start = nOutput
+        else:
+            start = 23
+        for i in range(start,15,-1):
             if ((hc['digital-out-%02d' % i]) == (not hc['digital-out-%02d-invert' % i])):
                 bufW[4] = (bufW[4] | (0x01 << (i - 16)))
             else:
                 bufW[4] = (bufW[4] & ~(0x01 << i))
-    if (nOutput >= 16):
-        for i in range(15,7,-1):
+    if (nOutput > 8):
+        if (nOutput <= 15):
+            start = nOutput
+        else:
+            start = 15
+        for i in range(start,7,-1):
             if ((hc['digital-out-%02d' % i]) == (not hc['digital-out-%02d-invert' % i])):
                 bufW[3] = (bufW[3] | (0x01 << (i - 8)))
             else:
                 bufW[3] = (bufW[3] & ~(0x01 << i))
-    if (nOutput >= 8):
-        for i in range(7,-1,-1):
-            if ((hc['digital-out-%02d' % i]) == (not hc['digital-out-%02d-invert' % i])):
-                bufW[2] = (bufW[2] | (0x01 << i))
-            else:
-                bufW[2] = (bufW[2] & ~(0x01 << i))
+    if (nOutput < 8):
+        start = nOutput - 1
+    else:
+        start = 7
+    for i in range(start,-1,-1):
+        if ((hc['digital-out-%02d' % i]) == (not hc['digital-out-%02d-invert' % i])):
+            bufW[2] = (bufW[2] | (0x01 << i))
+        else:
+            bufW[2] = (bufW[2] & ~(0x01 << i))
     # send to arduino
     writeBuffer()
 
@@ -170,32 +180,33 @@ def setAnalogIn():
     ch2 = ((bufR[4] >> 2) & 0x1F)
     # extract 2st analog value
     val2 = ((((bufR[4] & 0x3) *256) + (bufR[5] & 0xFF)) & 0x3FF)
-
+    
     if (inLinuxCNC):
         # set value in LinuxCNC
         # ch1
-        gain = hc['analog-in-%02d-gain' % ch1] or 1.0
-        offset = hc['analog-in-%02d-offset' % ch1]
-        hc['analog-in-%02d' % port] = val1 / 1023.0 * 5.0 * gain + offset
+        if (ch2 < nAnalogIn):
+            gain = hc['analog-in-%02d-gain' % ch1] or 1.0
+            offset = hc['analog-in-%02d-offset' % ch1]
+            hc['analog-in-%02d' % ch1] = val1 / 1023.0 * 5.0 * gain + offset
         # ch2
-        gain = hc['analog-in-%02d-gain' % ch2] or 1.0
-        offset = hc['analog-in-%02d-offset' % ch2]
-        hc['analog-in-%02d' % port] = val2 / 1023.0 * 5.0 * gain + offset
-    else:
+        if (ch2 < nAnalogIn):
+            gain = hc['analog-in-%02d-gain' % ch2] or 1.0
+            offset = hc['analog-in-%02d-offset' % ch2]
+            hc['analog-in-%02d' % ch2] = val2 / 1023.0 * 5.0 * gain + offset
+    if (printDebug):
         print("AnalogIn ch: " + str(ch1) + " val: " + str(val1))
-        print("AnalogIn ch: " + str(ch2) + " val: " + str(val1))
-        
+        print("AnalogIn ch: " + str(ch2) + " val: " + str(val2))
+
 
 # send analog value to arduino 
 def sendAnalogOut(ch):
     # set buffer 
     bufW[0] = START
-    bufW[1] = (0x02)
-    # write outputs pin
-    bufW[2] = 0
-    bufW[3] = 0
-    bufW[4] = 0
-    bufW[5] = 0
+    bufW[1] = 0x02
+    bufW[2] = 0xFF # channel 255 do not exist if set to 0 in arduino will set it
+    bufW[3] = 0x00
+    bufW[4] = 0xFF # channel 255 do not exist if set to 0 in arduino will set it
+    bufW[5] = 0x00
     
     # get analog value of channel ch 
     scale = hc['analog-out-%02d-scale' % ch] or 1.0
@@ -203,14 +214,17 @@ def sendAnalogOut(ch):
     data = (hc['analog-out-%02d' % ch] - offset) / scale / (5.0)
     bufW[2] = ch
     bufW[3] = int(data * 255 + 0.5)
-
+    #if (printDebug):
+    #    print("AnalogOut ch=" + str(bufW[2]) + " val=" + str(bufW[3]))
     if ((ch + 1) < nAnalogOut):
         # get analog value of channel (ch + 1)
         scale = hc['analog-out-%02d-scale' % (ch + 1)] or 1.0
         offset = hc['analog-out-%02d-offset' % (ch + 1)]
         data = (hc['analog-out-%02d' % (ch + 1)]- offset) / scale / (5.0)
-        bufW[2] = ch + 1
-        bufW[3] = int(data * 255 + 0.5)
+        bufW[4] = ch + 1
+        bufW[5] = int(data * 255 + 0.5)
+        #if(printDebug):
+        #    print("AnalogOut ch=" + str(bufW[4]) + " val=" + str(bufW[5]))
     # send to arduino
     writeBuffer()
 
@@ -224,11 +238,11 @@ try:
             bufR.append(byte)
             if ((byte == ACK) and (len(bufR) == 1)):
                 ack = True
-                if printDebug:
+                if not printDebug:
                     print("ACK")
             elif ((byte == NACK) and (len(bufR) == 1)):
                 ack = False
-                if printDebug:
+                if not printDebug:
                     print("NACK")
             # if the first byte is not the start byte clear the buffer 
             if (bufR[0] != START):
@@ -244,7 +258,7 @@ try:
                     # OK :) received good
 
                     # debug
-                    if (printDebug):
+                    if not printDebug:
                         print("R<--:", end='  ')
                         for b in bufR:
                             print(str("{0:0=8b}".format(b)), end='  ')
@@ -270,12 +284,13 @@ try:
             # sleep a bit :-)
             time.sleep(0.025)
             # send analog Pin stat to arduino
-            sendAnalogOut(analogCh)
-            # sleep a bit :-)
-            time.sleep(0.025)
-            analogCh += 1
-            if (analogCh >= nAnalogOut):
-                analogCh = 0
+            if (nAnalogOut > 0):
+                sendAnalogOut(analogCh)
+                # sleep a bit :-)
+                time.sleep(0.025)
+                analogCh += 2
+                if (analogCh >= nAnalogOut):
+                    analogCh = 0
 
         else:
             # TEST blink LED and send value to 1st PWM 
@@ -294,11 +309,11 @@ try:
             bufW[1] = (0x02)
             bufW[2] = (0x00)
             bufW[3] = (analogVal & 0xFF)
-            print("AnalogOut: " + str(analogVal))
+            #print("AnalogOut0: " + str(analogVal))
             analogVal += 12
             if (analogVal > 255):
                 analogVal = 0
-            bufW[4] = (0x01)
+            bufW[4] = (0xFF)
             bufW[5] = (0x00)
             writeBuffer()
             #

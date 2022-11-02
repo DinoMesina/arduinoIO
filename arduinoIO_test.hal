@@ -10,9 +10,9 @@ net din3 arduinoIO.digital-in-03 => arduinoIO-vcp.digital-in-03
 net din4 arduinoIO.digital-in-04 => arduinoIO-vcp.digital-in-04
 net din5 arduinoIO.digital-in-05 => arduinoIO-vcp.digital-in-05
 
-net dout0 arduinoIO.digital-out-01 <= arduinoIO-vcp.digital-out-01
-net dout1 arduinoIO.digital-out-02 <= arduinoIO-vcp.digital-out-02
-net dout2 arduinoIO.digital-out-03 <= arduinoIO-vcp.digital-out-03
+net dout0 arduinoIO.digital-out-00 <= arduinoIO-vcp.digital-out-00
+net dout1 arduinoIO.digital-out-01 <= arduinoIO-vcp.digital-out-01
+net dout2 arduinoIO.digital-out-02 <= arduinoIO-vcp.digital-out-02
 
 net ain0 arduinoIO.analog-in-00 => arduinoIO-vcp.analog-in-00 arduinoIO-vcp.analog-in-00b
 net ain1 arduinoIO.analog-in-01 => arduinoIO-vcp.analog-in-01 arduinoIO-vcp.analog-in-01b
