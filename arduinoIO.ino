@@ -45,75 +45,47 @@
 #define WRITEANA 0x02
 
 uint8_t sbuf[8];
-int pinIn[4][8]  = { { 2, 3, 4, 5, 6, 7,-1,-1 },\
-                     {-1,-1,-1,-1,-1,-1,-1,-1 },\
-                     {-1,-1,-1,-1,-1,-1,-1,-1 },\
-                     {-1,-1,-1,-1,-1,-1,-1,-1 } };
-
-int pinOut[4][8] = { {13,12, 8,-1,-1,-1,-1,-1 },\
-                     {-1,-1,-1,-1,-1,-1,-1,-1 },\
-                     {-1,-1,-1,-1,-1,-1,-1,-1 },\
-                     {-1,-1,-1,-1,-1,-1,-1,-1 } };
-
-int anaIn[4][8]  = { {A0,-1,-1,-1,-1,-1,-1,-1 },\
-                     {-1,-1,-1,-1,-1,-1,-1,-1 },\
-                     {-1,-1,-1,-1,-1,-1,-1,-1 },\
-                     {-1,-1,-1,-1,-1,-1,-1,-1 } };
-
-int anaOut[4][8] = { { 9,10,11,-1,-1,-1,-1,-1 },\
-                     {-1,-1,-1,-1,-1,-1,-1,-1 },\
-                     {-1,-1,-1,-1,-1,-1,-1,-1 },\
-                     {-1,-1,-1,-1,-1,-1,-1,-1 } };
+int pinIn[]  = {  2,  3,  4,  5,  6,  7 };
+int pinOut[] = { 13, 12,  8 };
+int anaIn[]  = { A0, A1 };
+int anaOut[] = {  9, 10, 11 };
+int ack=0;
 
 unsigned int ind = 0;
 int maxRead = 0;
-int indAnaRead = 0;
+int maxWrite = 0;
 int maxAnaRead = 0;
+int maxAnaWrite = 0;
+int indAnaRead = 0;
 
 void setup() {
   // initialize the serial communication
   Serial.begin(115200);
 
   // set digital input pins
-  maxRead = 0;
-  for (int i=0; i<4; i++){
-    for (int j=0; j<8; j++) {
-      if (pinIn[i][j] != -1) {
-        pinMode(pinIn[i][j], INPUT);      // set pin to input 
-        digitalWrite(pinIn[i][j], HIGH);  // turn on pullup resistors 
-        maxRead++;
-      }
-    } 
+  maxRead = sizeof(pinIn) / sizeof(int);
+  for (int i=0; i<maxRead; i++){
+    pinMode(pinIn[i], INPUT);      // set pin to input 
+    digitalWrite(pinIn[i], HIGH);  // turn on pullup resistors 
   }
 
   // set digital output pins 
-  for (int i=0; i<4; i++){
-    for (int j=0; j<8; j++) {
-      if (pinOut[i][j] != -1) {
-        pinMode(pinOut[i][j], OUTPUT);   // set pin to output 
-        digitalWrite(pinOut[i][j], LOW); // turn off pin 
-      }
-    } 
+  maxWrite = sizeof(pinOut) / sizeof(int);
+  for (int i=0; i<maxWrite; i++){
+    pinMode(pinOut[i], OUTPUT);   // set pin to output 
+    digitalWrite(pinOut[i], LOW); // turn off pin 
   }
 
   // set analog input pins
-  maxAnaRead = 0;
-  for (int i=0; i<4; i++){
-    for (int j=0; j<8; j++) {
-      if (anaIn[i][j] != -1) {
-        pinMode(anaIn[i][j], INPUT);      // set pin to input 
-        maxAnaRead++;
-      }
-    } 
+  maxAnaRead = sizeof(anaIn) / sizeof(int);
+  for (int i=0; i<maxAnaRead; i++){
+    pinMode(anaIn[i], INPUT);      // set pin to input 
   }
 
   // set analog output pins 
-  for (int i=0; i<4; i++){
-    for (int j=0; j<8; j++) {
-      if (anaOut[i][j] != -1) {
-        pinMode(anaOut[i][j], OUTPUT);   // set pin to output 
-      }
-    } 
+  maxAnaWrite = sizeof(anaOut) / sizeof(int);
+  for (int i=0; i<sizeof(anaOut); i++){
+    pinMode(anaOut[i], OUTPUT);   // set pin to output 
   }
 
 }
@@ -143,6 +115,7 @@ void loop() {
     uint16_t checksum = uint16_t(sbuf[6] * 256 + uint16_t(sbuf[7]));
     if ((sbuf[0] == START) && (sum == checksum)) {
       // OK :) send ACK
+      ack = 1;
       Serial.write(ACK);
 
       // do command 
@@ -153,9 +126,6 @@ void loop() {
         case WRITEANA:
           writeAna(); // write analog pin
           break;
-        default:
-        
-          break;
       }
             
     } else {
@@ -165,7 +135,8 @@ void loop() {
   }
 
   // devo aggiornare i dati?
-  if (1) {
+  if (ack) {
+    ack = 0;
     // read the digital input pins
     if (maxRead > 0) {
       readDig();
@@ -179,7 +150,7 @@ void loop() {
       }
     }
     // wait a bit 
-    delay(200);
+    //delay(20);
   }
 }
 
@@ -187,12 +158,14 @@ void loop() {
  * read digital pins 
  */
 void readDig(){
+  int i, j, k;
   // read inut pins 
   uint8_t input[4];
-  for (int i=0; i<4; i++) {
-    input[i] = 0;
-    for (int j=8; j>=0; j--) {
-      if ((pinIn[i][j] != -1) && (digitalRead(pinIn[i][j]))) {
+  for (i=0; i<4; i++) {
+    input[i] = 0x00;
+    for (j=0; j<8; j++) {
+      k = ((i * 8) + j);
+      if ((k < maxRead) && (digitalRead(pinIn[k]))) {
           input[i] |= (0x01<<j);
       }
     }
@@ -214,12 +187,14 @@ void readDig(){
  * write digital pins
  */
 void writeDig(){
-  for (int i=0; i<4; i++) {
-    for (int j=0; j<8; j++) {
-      if (pinOut[i][j] != -1) {
-        digitalWrite(pinOut[i][j], (sbuf[2 + i] & (0x01<<j)));
+  int i, j, k;
+  for (i=0; i<4; i++) {
+    for (j=0; j<8; j++) {
+      k = ((i * 8) + j);
+      if (k < maxWrite) {
+        digitalWrite(pinOut[k], (sbuf[2 + i] & (0x01<<j)));
       }
-    }
+    } 
   }
 }
 
@@ -229,22 +204,13 @@ void writeDig(){
 void readAna(int p) {
   if (p >= maxAnaRead)
     return;
-  uint8_t output[] = { 0x00, 0x00, 0x00, 0x00 };
-  int i, j;
+  uint8_t output[] = { 0xFF, 0x00, 0xFF, 0x00 };
   uint16_t analog = 0;
   
   // first analog 
-  i = 3;
-  if (p < 8)
-    i = 0;
-  else if (p < 16)
-    i = 1;
-  else if (p < 24)
-    i = 2;
-    j = p % 8;
-  analog = analogRead(anaIn[i][j]);
+  analog = analogRead(anaIn[p]);
   /*
-   * analog bytes
+   *   analog bytes
    *   xxxxxxyy  yyyyyyyy
    *   \----/\----------/
    *   index     value   
@@ -255,18 +221,11 @@ void readAna(int p) {
 
   // second analog 
   if ((p + 1) < maxAnaRead) {
-    i = 3;
-    if ((p + 1) < 8)
-      i = 0;
-    else if ((p + 1) < 16)
-      i = 1;
-    else if ((p + 1) < 24)
-      i = 2;
-    j = (p + 1) % 8;
-    analog = analogRead(anaIn[i][j]);
+    analog = analogRead(anaIn[p + 1]);
     output[2] = ((((p + 1) & 0xFF) << 2) | ((analog >> 8) & 0x03));
     output[3] = (analog & 0xFF);
   }
+  
   // send data
   Serial.write(START);
   Serial.write(READANA);
@@ -285,37 +244,22 @@ void readAna(int p) {
 void writeAna() {
   int pwm;
   // first PWM 
-  int i = 3;
-  if (sbuf[2] < 8)
-    i = 0;
-  else if (sbuf[2] < 16)
-    i = 1;
-  else if (sbuf[2] < 24)
-    i = 2;
-  int j = sbuf[2] % 8;
-  if (anaOut[i][j] != -1) {
-    int pwm = sbuf[3];
+  if (sbuf[2] < maxAnaWrite) {
+    pwm = sbuf[3];
     if (pwm < 0) 
       pwm = 0;
     if (pwm > 255) 
       pwm = 255;
-    analogWrite(anaOut[i][j], pwm);
+    analogWrite(anaOut[sbuf[2]], pwm);
   }
+  
   // second PWM 
-  i = 3;
-  if (sbuf[4] < 8)
-    i = 0;
-  else if (sbuf[4] < 16)
-    i = 1;
-  else if (sbuf[4] < 24)
-    i = 2;
-  j = sbuf[4] % 8;
-  if (anaOut[i][j] != -1) {
+  if (sbuf[4] < maxAnaWrite) {
     pwm = sbuf[5];
     if (pwm < 0) 
       pwm = 0;
     if (pwm > 255) 
       pwm = 255;
-    analogWrite(anaOut[i][j], pwm);
+    analogWrite(anaOut[sbuf[4]], pwm);
   }
 }
