@@ -37,8 +37,8 @@ nOutput = 3        # output pins available on arduino
 nAnalogIn = 2      # input analog pins available on arduino 
 nAnalogOut = 3     # output analog pins available on arduino 
 
-printDebug = not False
-inLinuxCNC = not True 
+printDebug = False
+inLinuxCNC = True
 
 ACK      = 0b00000110 # ASCII ACK
 NACK     = 0b00010101 # ASCII NAK
@@ -48,8 +48,8 @@ WRITEDIG = 0x01
 READANA  = 0x02
 WRITEANA = 0x02
 
-bufR=[] # buffer read
-bufW=[0, 0, 0, 0, 0, 0, 0, 0] # buffer write
+bufR = [] # buffer read
+bufW = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00] # buffer write
 ack = False
 digitalTime = 0
 analogTime = 0
@@ -93,7 +93,6 @@ def writeBuffer():
         checksum += bufW[i]
     bufW[6] = (checksum >> 8) & 0xFF
     bufW[7] = (checksum & 0xFF)
-    
     # send bytes
     if (sys.version_info.major < 3):
         values = bytearray([ int(bufW[0]), int(bufW[1]), int(bufW[2]), int(bufW[3]), int(bufW[4]), int(bufW[5]), int(bufW[6]), int(bufW[7]) ])
@@ -101,7 +100,9 @@ def writeBuffer():
     else:
         for b in bufW:
             ser.write(b.to_bytes(1, byteorder='big'))
-
+    # sleep a little bit :-)
+    time.sleep(0.02)
+    
     # debug
     if printDebug:
         print("W-->:", end='  ')
@@ -138,36 +139,24 @@ def sendDigitalOut():
     bufW[4] = 0x00
     bufW[5] = 0x00
     if (nOutput > 24):
-        for i in range(nOutput,23,-1):
+        for i in range((nOutput if nOutput <= 31 else 31), 23, -1):
             if ((hc['digital-out-%02d' % i]) == (not hc['digital-out-%02d-invert' % i])):
                 bufW[5] = (bufW[5] | (0x01 << (i - 24)))
             else:
                 bufW[5] = (bufW[5] & ~(0x01 << i))
     if (nOutput > 16):
-        if (nOutput <= 23):
-            start = nOutput
-        else:
-            start = 23
-        for i in range(start,15,-1):
+        for i in range((nOutput if nOutput <= 23 else 23), 15, -1):
             if ((hc['digital-out-%02d' % i]) == (not hc['digital-out-%02d-invert' % i])):
                 bufW[4] = (bufW[4] | (0x01 << (i - 16)))
             else:
                 bufW[4] = (bufW[4] & ~(0x01 << i))
     if (nOutput > 8):
-        if (nOutput <= 15):
-            start = nOutput
-        else:
-            start = 15
-        for i in range(start,7,-1):
+        for i in range((nOutput if nOutput <= 15 else 15), 7, -1):
             if ((hc['digital-out-%02d' % i]) == (not hc['digital-out-%02d-invert' % i])):
                 bufW[3] = (bufW[3] | (0x01 << (i - 8)))
             else:
                 bufW[3] = (bufW[3] & ~(0x01 << i))
-    if (nOutput < 8):
-        start = nOutput - 1
-    else:
-        start = 7
-    for i in range(start,-1,-1):
+    for i in range(((nOutput - 1) if nOutput < 8 else 7), -1, -1):
         if ((hc['digital-out-%02d' % i]) == (not hc['digital-out-%02d-invert' % i])):
             bufW[2] = (bufW[2] | (0x01 << i))
         else:
@@ -191,7 +180,7 @@ def setAnalogIn():
     if (inLinuxCNC):
         # set value in LinuxCNC
         # ch1
-        if (ch2 < nAnalogIn):
+        if (ch1 < nAnalogIn):
             gain = hc['analog-in-%02d-gain' % ch1] or 1.0
             offset = hc['analog-in-%02d-offset' % ch1]
             hc['analog-in-%02d' % ch1] = val1 / 1023.0 * 5.0 * gain + offset
@@ -208,12 +197,15 @@ def setAnalogIn():
 
 # send analog value to arduino 
 def sendAnalogOut(ch):
+    if (ch >= nAnalogOut):
+        return
+
     # set buffer 
     bufW[0] = START
     bufW[1] = WRITEANA
-    bufW[2] = 0xFF # channel 255 do not exist if set to 0 in arduino will set it
+    bufW[2] = 0xFF # channel 255 do not exist if set to 0 arduino will set it in output
     bufW[3] = 0x00
-    bufW[4] = 0xFF # channel 255 do not exist if set to 0 in arduino will set it
+    bufW[4] = 0xFF # channel 255 do not exist if set to 0 arduino will set it in output
     bufW[5] = 0x00
     
     # get analog value of channel ch 
@@ -221,25 +213,28 @@ def sendAnalogOut(ch):
     offset = hc['analog-out-%02d-offset' % ch]
     data = (hc['analog-out-%02d' % ch] - offset) / scale / (5.0)
     bufW[2] = ch
-    bufW[3] = int(data * 255 + 0.5)
-    if (printDebug):
-        print("AnalogOut ch=" + str(bufW[2]) + " val=" + str(bufW[3]))
+    bufW[3] = int((data * 255) + 0.5)
     if ((ch + 1) < nAnalogOut):
         # get analog value of channel (ch + 1)
         scale = hc['analog-out-%02d-scale' % (ch + 1)] or 1.0
         offset = hc['analog-out-%02d-offset' % (ch + 1)]
         data = (hc['analog-out-%02d' % (ch + 1)]- offset) / scale / (5.0)
         bufW[4] = ch + 1
-        bufW[5] = int(data * 255 + 0.5)
-        if(printDebug):
-            print("AnalogOut ch=" + str(bufW[4]) + " val=" + str(bufW[5]))
+        bufW[5] = int((data * 255) + 0.5)
     # send to arduino
     writeBuffer()
+    # debug
+    if (printDebug):
+        print("AnalogOut ch=" + str(bufW[2]) + " val=" + str(bufW[3]))
+        print("AnalogOut ch=" + str(bufW[4]) + " val=" + str(bufW[5]))
 
 
 try:
+    # clear buffer
+    bufR = []
+    # do forever 
     while True:
-        # read from arduino 
+        # read serial from arduino
         while ser.inWaiting():
             # read a byte from the serial port and convert it into int
             byte = ord(ser.read(size=1))
@@ -247,31 +242,29 @@ try:
             if ((byte == ACK) and (len(bufR) == 1)):
                 ack = True
                 if printDebug:
-                    print("ACK")
+                    print("R<--:ACK")
             elif ((byte == NACK) and (len(bufR) == 1)):
                 ack = False
                 if printDebug:
-                    print("NACK")
+                    print("R<--:NACK")
             # if the first byte is not the start byte clear the buffer 
             if (bufR[0] != START):
-                bufR=[]
+                bufR = []
             # if have received 8 bytes check the checksum 
             if (len(bufR) == 8):
                 checksum = bufR[6] * 256 + bufR[7]
-                sumR = 0
                 # calculate the sum of bytes received 
+                sumR = 0
                 for b in bufR[0:-2]:
                     sumR += b
                 if (sumR == checksum):
                     # OK :) received good
-
                     # debug
                     if printDebug:
                         print("R<--:", end='  ')
                         for b in bufR:
                             print(str("{0:0=8b}".format(b)), end='  ')
                         print()
-                    
                     # check the command
                     if (bufR[1] == READDIG):
                         # set digital input pins
@@ -279,7 +272,6 @@ try:
                     elif (bufR[1] == READANA):
                         # set analog input pins
                         setAnalogIn()
-                    
                 else:
                     print("ERROR: checksum not match!")
                 # clear the buffer
@@ -287,23 +279,21 @@ try:
         # end while
 
         if (inLinuxCNC):
-            # send digital Pin stat to arduino
+            # send digital pin stat to arduino
             sendDigitalOut()
-            # sleep a bit :-)
-            time.sleep(0.025)
-            # send analog Pin stat to arduino
+
+            # send analog pin value to arduino
             if (nAnalogOut > 0):
                 sendAnalogOut(analogCh)
-                # sleep a bit :-)
-                time.sleep(0.025)
+                # next ch 
                 analogCh += 2
                 if (analogCh >= nAnalogOut):
                     analogCh = 0
 
         else:
-            # TEST blink LED and send value to 1st PWM
-            now = time.time_ns()
-            if ((now - digitalTime) > 500000000):
+            now = time.time()
+            # blink LED 
+            if ((now - digitalTime) > 0.5):
                 # change LED state
                 stateLed = 0x00 if stateLed else 0x01 
                 bufW[0] = START
@@ -313,26 +303,26 @@ try:
                 bufW[4] = (0x00)
                 bufW[5] = (0x00)
                 writeBuffer()
-                print("LED=" + ("ON" if stateLed else "OFF"))
-                digitalTime = time.time_ns()
-            
-            if ((now - analogTime) > 1500000000):
+                print("LED ON" if stateLed else "LED OFF")
+                digitalTime = time.time()
+            # send value to 1st PWM
+            if ((now - analogTime) > 2.0):
                 # PWM
                 bufW[0] = START
                 bufW[1] = WRITEANA
                 bufW[2] = (0x00)
                 bufW[3] = (analogVal & 0xFF)
-                analogVal += 12
-                if (analogVal > 255):
-                    analogVal = 0
                 bufW[4] = (0xFF)
                 bufW[5] = (0x00)
                 writeBuffer()
-                print("PWM=" + str(analogVal))
-                analogTime = time.time_ns()
-                
-            time.sleep(0.025)
-                                
+                print('PWM = {:3d} Volt = {:3.3}'.format(analogVal, (analogVal / 255 * 5.0)))
+                analogVal += 12
+                if (analogVal > 255):
+                    analogVal = 0
+                analogTime = time.time()
+            # sleep a bit 
+            time.sleep(0.1)
+
 except (KeyboardInterrupt,):
     if (inLinuxCNC):
         raise SystemExit

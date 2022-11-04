@@ -25,24 +25,12 @@
 <tablerow/>
     <label text="analog-in-00" font="helvetica -12 bold"/>
     <label text="analog-in-01" font="helvetica -12 bold"/>
-    <label text="analog-in-02" font="helvetica -12 bold"/>
-    <label text="analog-in-03" font="helvetica -12 bold"/>
-    <label text="analog-in-04" font="helvetica -12 bold"/>
-    <label text="analog-in-05" font="helvetica -12 bold"/>
 <tablerow/>
     <number halpin="analog-in-00" format="-1.4f"/>
     <number halpin="analog-in-01" format="-1.4f"/>
-    <number halpin="analog-in-02" format="-1.4f"/>
-    <number halpin="analog-in-03" format="-1.4f"/>
-    <number halpin="analog-in-04" format="-1.4f"/>
-    <number halpin="analog-in-05" format="-1.4f"/>
 <tablerow/>
     <bar halpin="analog-in-00b" min_="0" max_="5"/>
     <bar halpin="analog-in-01b" min_="0" max_="5"/>
-    <bar halpin="analog-in-02b" min_="0" max_="5"/>
-    <bar halpin="analog-in-03b" min_="0" max_="5"/>
-    <bar halpin="analog-in-04b" min_="0" max_="5"/>
-    <bar halpin="analog-in-05b" min_="0" max_="5"/>
 <tablerow/>
     <label text="analog-out-00" font="helvetica -12 bold"/>
     <label text="analog-out-01" font="helvetica -12 bold"/>
