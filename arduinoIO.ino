@@ -28,9 +28,11 @@
  * command 0:
  *   nulla
  * command 1:
- *   legge/scrive pin digitali
+ *   read/write digital pin 
+ *   (32bit pin mask MSB..LSB MSB..LSB MSB..LSB MSB..LSB : MSB=8th pin LSB=1st pin)
  * command 2:
- *   legge/scrive pin analogici
+ *   read/write analogical pin 
+ *   (32bit xxxxxxyy yyyyyyyy uuuuuuvv vvvvvvvv : x|u=channel y|v=value)
  * 
  */
 

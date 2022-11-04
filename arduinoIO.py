@@ -170,12 +170,12 @@ def setAnalogIn():
     # extract 1st analog channel
     ch1 = ((bufR[2] >> 2) & 0x1F)
     # extract 1st analog value
-    val1 = (((bufR[2] & 0x3) * 256) + (bufR[3] & 0xFF))
+    val1 = ((((bufR[2] & 0x3) * 256) + (bufR[3] & 0xFF)) & 0x3FF)
     
     # extract 2st analog channel
     ch2 = ((bufR[4] >> 2) & 0x1F)
     # extract 2st analog value
-    val2 = ((((bufR[4] & 0x3) *256) + (bufR[5] & 0xFF)) & 0x3FF)
+    val2 = ((((bufR[4] & 0x3) * 256) + (bufR[5] & 0xFF)) & 0x3FF)
     
     if (inLinuxCNC):
         # set value in LinuxCNC
