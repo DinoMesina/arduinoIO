@@ -9,9 +9,6 @@
     <label text="digital-in-03" font="helvetica -12 bold"/>
     <label text="digital-in-04" font="helvetica -12 bold"/>
     <label text="digital-in-05" font="helvetica -12 bold"/>
-    <label text="digital-out-00" font="helvetica -12 bold"/>
-    <label text="digital-out-01" font="helvetica -12 bold"/>
-    <label text="digital-out-02" font="helvetica -12 bold"/>
 <tablerow/>
     <led halpin="digital-in-00"/>
     <led halpin="digital-in-01"/>
@@ -19,6 +16,11 @@
     <led halpin="digital-in-03"/>
     <led halpin="digital-in-04"/>
     <led halpin="digital-in-05"/>
+<tablerow/>
+    <label text="digital-out-00" font="helvetica -12 bold"/>
+    <label text="digital-out-01" font="helvetica -12 bold"/>
+    <label text="digital-out-02" font="helvetica -12 bold"/>
+<tablerow/>
     <checkbutton halpin="digital-out-00"/>
     <checkbutton halpin="digital-out-01"/>
     <checkbutton halpin="digital-out-02"/>
