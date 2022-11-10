@@ -26,7 +26,7 @@
  * 16bit checksum (uint16_t sum of prev 6 uint8_t)
  * 
  * command 0:
- *   nulla
+ *   nothing 
  * command 1:
  *   read/write digital pin 
  *   (32bit pin mask MSB..LSB MSB..LSB MSB..LSB MSB..LSB : MSB=8th pin LSB=1st pin)
@@ -47,12 +47,13 @@
 #define WRITEANA 0x02
 
 uint8_t sbuf[8];
-int pinIn[]  = {  2,  3,  4,  5,  6,  7 };
-int pinOut[] = { 13, 12,  8 };
-int anaIn[]  = { A0, A1 };
-int anaOut[] = {  9, 10, 11 };
-int ack=0;
+int pinIn[]     = {  2,  3,  4,  5,  6,  7 }; // pin list digital input 
+int inActive[]  = {  1,  1,  1,  1,  1,  1 }; // 1=Active HIGH; 0=Active LOW 
+int pinOut[]    = { 13, 12,  8 }; // pin list digital output 
+int anaIn[]     = { A0, A1 }; // pin list analog input
+int anaOut[]    = {  9, 10, 11 }; // pin list analog output 
 
+int ack=0;
 unsigned int ind = 0;
 int maxRead = 0;
 int maxWrite = 0;
@@ -167,7 +168,8 @@ void readDig(){
     input[i] = 0x00;
     for (j=0; j<8; j++) {
       k = ((i * 8) + j);
-      if ((k < maxRead) && (digitalRead(pinIn[k]))) {
+      if (k < maxRead) {
+        if (digitalRead(pinIn[k]) == inActive[k])
           input[i] |= (0x01<<j);
       }
     }
