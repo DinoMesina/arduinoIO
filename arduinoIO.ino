@@ -46,12 +46,15 @@
 #define READANA  0x02
 #define WRITEANA 0x02
 
+#define BAUD 115200
+#define MAXDELAY 10
+
 uint8_t sbuf[8];
-int pinIn[]     = {  2,  3,  4,  5,  6,  7 }; // pin list digital input 
-int inActive[]  = {  1,  1,  1,  1,  1,  1 }; // 1=Active HIGH; 0=Active LOW 
-int pinOut[]    = { 13, 12,  8 }; // pin list digital output 
-int anaIn[]     = { A0, A1 }; // pin list analog input
-int anaOut[]    = {  9, 10, 11 }; // pin list analog output 
+int pinIn[]     = { 12, 11, 10,  8, A0, A1, A2, A3 }; // pin list digital input 
+int inActive[]  = {  1,  0,  0,  0,  0,  0,  0,  0 }; // 1=Active HIGH; 0=Active LOW 
+int pinOut[]    = { 13,  6,  5,  4,  3,  2 }; // pin list digital output 
+int anaIn[]     = { A6, A7 }; // pin list analog input
+int anaOut[]    = {  9 }; // pin list analog output 
 
 int ack=0;
 unsigned int ind = 0;
@@ -61,9 +64,11 @@ int maxAnaRead = 0;
 int maxAnaWrite = 0;
 int indAnaRead = 0;
 
+unsigned long lastSend = 0;
+
 void setup() {
   // initialize the serial communication
-  Serial.begin(115200);
+  Serial.begin(BAUD);
 
   // set digital input pins
   maxRead = sizeof(pinIn) / sizeof(int);
@@ -137,9 +142,8 @@ void loop() {
     }
   }
 
-  // devo aggiornare i dati?
-  if (ack) {
-    ack = 0;
+  // have to update the data?
+  if (ack or (millis() - lastSend >= MAXDELAY)) {
     // read the digital input pins
     if (maxRead > 0) {
       readDig();
@@ -152,8 +156,9 @@ void loop() {
         indAnaRead = 0;
       }
     }
-    // wait a bit 
-    //delay(20);
+    // reset vars
+    ack = 0;
+    lastSend = millis();
   }
 }
 

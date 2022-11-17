@@ -38,7 +38,7 @@ nAnalogIn = 2      # input analog pins available on arduino
 nAnalogOut = 3     # output analog pins available on arduino 
 
 printDebug = False
-inLinuxCNC = True
+inLinuxCNC = not True
 
 ACK      = 0b00000110 # ASCII ACK
 NACK     = 0b00010101 # ASCII NAK
@@ -123,7 +123,7 @@ def setDigitalIn():
             hc['digital-in-%02d' % i] = ((bits & (0x01 << i)) != 0)
             hc['digital-in-%02d-not' % i] = ((bits & (0x01 << i)) == 0)
     if printDebug:
-        print("DigitalOut:", end=' ')
+        print("DigitalIn:", end=' ')
         for i in range(nInput):
             print(((bits & (0x01 << i)) >> i), end='')
         print()
