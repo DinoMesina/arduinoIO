@@ -26,19 +26,22 @@ import serial
 import sys
 import time
 
-PORT = "/dev/ttyUSB0"
+#PORT = "/dev/ttyUSB0" # for Arduino Duemilanove/UNO
+PORT = "/dev/ttyACM0" # for Arduino MEGA 2560 
+BAUD = 115200
+TIMEOUT = 2
 
 if len(sys.argv) > 1:
     PORT = sys.argv[1]
 
-ser = serial.Serial(PORT, 115200, timeout=2)
-nInput = 6         # input pins available on arduino 
-nOutput = 3        # output pins available on arduino 
+ser = serial.Serial()
+nInput = 8         # input pins available on arduino 
+nOutput = 6        # output pins available on arduino 
 nAnalogIn = 2      # input analog pins available on arduino 
-nAnalogOut = 3     # output analog pins available on arduino 
+nAnalogOut = 1     # output analog pins available on arduino 
 
 printDebug = False
-inLinuxCNC = not True
+inLinuxCNC = True
 
 ACK      = 0b00000110 # ASCII ACK
 NACK     = 0b00010101 # ASCII NAK
@@ -232,7 +235,14 @@ def sendAnalogOut(ch):
 try:
     # clear buffer
     bufR = []
-    # do forever 
+    # set serial parameters, needed for Arduino MEGA 2560 board reset
+    ser.port = PORT
+    ser.baudrate = BAUD
+    ser.timeout = TIMEOUT
+    ser.open()
+    # wait Arduino reset completed
+    time.sleep(1.5)
+    # do forever
     while True:
         # read serial from arduino
         while ser.inWaiting():
@@ -306,7 +316,7 @@ try:
                 print("LED ON" if stateLed else "LED OFF")
                 digitalTime = time.time()
             # send value to 1st PWM
-            if ((now - analogTime) > 2.0):
+            if ((now - analogTime) > 5.0):
                 # PWM
                 bufW[0] = START
                 bufW[1] = WRITEANA
