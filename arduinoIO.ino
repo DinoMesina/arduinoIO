@@ -47,7 +47,7 @@
 #define WRITEANA 0x02
 
 #define BAUD 115200
-#define MAXDELAY 10
+#define MAXDELAY 20
 
 uint8_t sbuf[8];
 int pinIn[]     = { 12, 11, 10,  8, A0, A1, A2, A3 }; // pin list digital input 
@@ -101,7 +101,7 @@ void setup() {
 void loop() {
   uint16_t sum = 0;
   // read data from serial
-  while(Serial.available() > 0) {
+  while (Serial.available() > 0) {
     sbuf[ind] = Serial.read();
     if ((ind < 8) && (sbuf[0] == START)){
       ind++;
