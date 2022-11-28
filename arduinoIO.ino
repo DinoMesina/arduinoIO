@@ -47,12 +47,12 @@
 #define WRITEANA 0x02
 
 #define BAUD 115200
-#define MAXDELAY 20
+#define MAXDELAY 30
 
 uint8_t sbuf[8];
 int pinIn[]     = { 12, 11, 10,  8, A0, A1, A2, A3 }; // pin list digital input 
-int inActive[]  = {  1,  0,  0,  0,  0,  0,  0,  0 }; // 1=Active HIGH; 0=Active LOW 
-int pinOut[]    = { 13,  6,  5,  4,  3,  2 }; // pin list digital output 
+int inActive[]  = {  0,  0,  0,  0,  0,  0,  0,  0 }; // 1=Active HIGH; 0=Active LOW 
+int pinOut[]    = {  7,  6,  5,  4,  3,  2, 13 }; // pin list digital output 
 int anaIn[]     = { A6, A7 }; // pin list analog input
 int anaOut[]    = {  9 }; // pin list analog output 
 
