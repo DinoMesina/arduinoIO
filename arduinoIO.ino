@@ -49,6 +49,8 @@
 #define BAUD 115200
 #define MAXDELAY 30
 
+#define ANALOGREADS 20 
+
 uint8_t sbuf[8];
 int pinIn[]        = { 12, 11, 10,  8, A0, A1, A2, A3 }; // pin list digital input 
 int inActive[]     = {  0,  0,  0,  0,  0,  0,  0,  0 }; // 1=Active HIGH; 0=Active LOW 
@@ -216,13 +218,20 @@ void writeDig(){
  * read analog pins 
  */
 void readAna(int p) {
+  long int tmpVal;
+  int i;
   if (p >= maxAnaRead)
     return;
   uint8_t output[] = { 0xFF, 0x00, 0xFF, 0x00 };
   uint16_t analog = 0;
   
   // first analog 
-  analog = analogRead(anaIn[p]);
+  tmpVal = 0;
+  for (i=0; i<ANALOGREADS; i++) {
+    tmpVal += analogRead(anaIn[p]);
+    delay(1);
+  }
+  analog = (int)(tmpVal / ANALOGREADS);
   /*
    *   analog bytes
    *   xxxxxxyy  yyyyyyyy
@@ -235,7 +244,12 @@ void readAna(int p) {
 
   // second analog 
   if ((p + 1) < maxAnaRead) {
-    analog = analogRead(anaIn[p + 1]);
+    tmpVal = 0;
+    for (i=0; i<ANALOGREADS; i++) {
+      tmpVal += analogRead(anaIn[p + 1]);
+      delay(1);
+    }
+    analog = (int)(tmpVal / ANALOGREADS);
     output[2] = ((((p + 1) & 0xFF) << 2) | ((analog >> 8) & 0x03));
     output[3] = (analog & 0xFF);
   }
