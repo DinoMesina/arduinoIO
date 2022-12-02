@@ -1,7 +1,11 @@
 loadusr -W arduinoIO /dev/ttyUSB0
 loadusr -Wn arduinoIO-vcp pyvcp arduinoIO-vcp.xml
 
-show pin arduinoIO-vcp
+loadrt threads period1=1000000 name1=thread
+loadrt scale count=2 
+addf scale.0 thread 
+addf scale.1 thread 
+start 
 
 net din0 arduinoIO.digital-in-00 => arduinoIO-vcp.digital-in-00
 net din1 arduinoIO.digital-in-01 => arduinoIO-vcp.digital-in-01
@@ -9,16 +13,28 @@ net din2 arduinoIO.digital-in-02 => arduinoIO-vcp.digital-in-02
 net din3 arduinoIO.digital-in-03 => arduinoIO-vcp.digital-in-03
 net din4 arduinoIO.digital-in-04 => arduinoIO-vcp.digital-in-04
 net din5 arduinoIO.digital-in-05 => arduinoIO-vcp.digital-in-05
+net din6 arduinoIO.digital-in-06 => arduinoIO-vcp.digital-in-06
+net din7 arduinoIO.digital-in-07 => arduinoIO-vcp.digital-in-07
 
 net dout0 arduinoIO.digital-out-00 <= arduinoIO-vcp.digital-out-00
 net dout1 arduinoIO.digital-out-01 <= arduinoIO-vcp.digital-out-01
 net dout2 arduinoIO.digital-out-02 <= arduinoIO-vcp.digital-out-02
+net dout3 arduinoIO.digital-out-03 <= arduinoIO-vcp.digital-out-03
+net dout4 arduinoIO.digital-out-04 <= arduinoIO-vcp.digital-out-04
+net dout5 arduinoIO.digital-out-05 <= arduinoIO-vcp.digital-out-05
+net dout6 arduinoIO.digital-out-06 <= arduinoIO-vcp.digital-out-06
 
-net ain0 arduinoIO.analog-in-00 => arduinoIO-vcp.analog-in-00 arduinoIO-vcp.analog-in-00b
-net ain1 arduinoIO.analog-in-01 => arduinoIO-vcp.analog-in-01 arduinoIO-vcp.analog-in-01b
+setp scale.0.gain 20.0
+setp scale.0.offset 0.0
+net ain0 arduinoIO.analog-in-00 => arduinoIO-vcp.analog-in-00 scale.0.in
+net ain0perc scale.0.out => arduinoIO-vcp.analog-in-00b
+
+setp scale.1.gain 20.0
+setp scale.1.offset 0.0
+net ain1 arduinoIO.analog-in-01 => arduinoIO-vcp.analog-in-01 scale.1.in
+net ain1perc scale.1.out => arduinoIO-vcp.analog-in-01b
 
 net aout0 arduinoIO.analog-out-00 => arduinoIO-vcp.analog-out-00-f
-net aout1 arduinoIO.analog-out-01 => arduinoIO-vcp.analog-out-01-f
-net aout2 arduinoIO.analog-out-02 => arduinoIO-vcp.analog-out-02-f
+setp arduinoIO.analog-out-00-scale 2.0
 
 waitusr arduinoIO-vcp

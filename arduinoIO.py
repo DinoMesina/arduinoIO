@@ -26,22 +26,20 @@ import serial
 import sys
 import time
 
-#PORT = "/dev/ttyUSB0" # for Arduino Duemilanove/UNO
-PORT = "/dev/ttyACM0" # for Arduino MEGA 2560 
+PORT = "/dev/ttyUSB0" # for Arduino Duemilanove/UNO
+#PORT = "/dev/ttyACM0" # for Arduino MEGA 2560 
 BAUD = 115200
 TIMEOUT = 2
 
-if len(sys.argv) > 1:
-    PORT = sys.argv[1]
-
-ser = serial.Serial()
 nInput = 8         # input pins available on arduino 
-nOutput = 6        # output pins available on arduino 
+nOutput = 7        # output pins available on arduino 
 nAnalogIn = 2      # input analog pins available on arduino 
 nAnalogOut = 1     # output analog pins available on arduino 
 
 printDebug = False
 inLinuxCNC = True
+
+ser = serial.Serial()
 
 ACK      = 0b00000110 # ASCII ACK
 NACK     = 0b00010101 # ASCII NAK

@@ -1,45 +1,158 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <pyvcp>
-<table>
-<tablesticky sticky="n"/>
+  <table>
+    <tablesticky sticky="ns"/>
+    <tablerow/>
+
+  <hbox>
+    <vbox>
+      <relief>GROOVE</relief>
+      <bd>4</bd>
+      <table>
+        <tablesticky sticky="n"/>
+        <tablerow/>
+          <label text="  digital-in-00  " font="helvetica -12 bold"/>
+        <tablerow/>
+          <led halpin="digital-in-00"/>
+      </table>
+    </vbox>
+    <vbox>
+      <relief>GROOVE</relief>
+      <bd>4</bd>
+      <table>
+        <tablesticky sticky="n"/>
+        <tablerow/>
+          <label text="  digital-in-01  " font="helvetica -12 bold"/>
+        <tablerow/>
+          <led halpin="digital-in-01"/>
+      </table>
+    </vbox>
+    <vbox>
+      <relief>GROOVE</relief>
+      <bd>4</bd>
+      <table>
+        <tablesticky sticky="n"/>
+        <tablerow/>
+          <label text="  digital-in-02  " font="helvetica -12 bold"/>
+        <tablerow/>
+          <led halpin="digital-in-02"/>
+      </table>
+    </vbox>
+    <vbox>
+      <relief>GROOVE</relief>
+      <bd>4</bd>
+      <table>
+        <tablesticky sticky="n"/>
+        <tablerow/>
+          <label text="  digital-in-03  " font="helvetica -12 bold"/>
+        <tablerow/>
+          <led halpin="digital-in-03"/>
+      </table>
+    </vbox>
+    <vbox>
+      <relief>GROOVE</relief>
+      <bd>4</bd>
+      <table>
+        <tablesticky sticky="n"/>
+        <tablerow/>
+          <label text="  digital-in-04  " font="helvetica -12 bold"/>
+        <tablerow/>
+          <led halpin="digital-in-04"/>
+      </table>
+    </vbox>
+    <vbox>
+      <relief>GROOVE</relief>
+      <bd>4</bd>
+      <table>
+        <tablesticky sticky="n"/>
+        <tablerow/>
+          <label text="  digital-in-05  " font="helvetica -12 bold"/>
+        <tablerow/>
+          <led halpin="digital-in-05"/>
+      </table>
+    </vbox>
+    <vbox>
+      <relief>GROOVE</relief>
+      <bd>4</bd>
+      <table>
+        <tablesticky sticky="n"/>
+        <tablerow/>
+          <label text="  digital-in-06  " font="helvetica -12 bold"/>
+        <tablerow/>
+          <led halpin="digital-in-06"/>
+      </table>
+    </vbox>
+    <vbox>
+      <relief>GROOVE</relief>
+      <bd>4</bd>
+      <table>
+        <tablesticky sticky="n"/>
+        <tablerow/>
+          <label text="digital-in-07" font="helvetica -12 bold"/>
+        <tablerow/>
+          <led halpin="digital-in-07"/>
+      </table>
+    </vbox>
+  </hbox>
 <tablerow/>
-    <label text="digital-in-00" font="helvetica -12 bold"/>
-    <label text="digital-in-01" font="helvetica -12 bold"/>
-    <label text="digital-in-02" font="helvetica -12 bold"/>
-    <label text="digital-in-03" font="helvetica -12 bold"/>
-    <label text="digital-in-04" font="helvetica -12 bold"/>
-    <label text="digital-in-05" font="helvetica -12 bold"/>
-<tablerow/>
-    <led halpin="digital-in-00"/>
-    <led halpin="digital-in-01"/>
-    <led halpin="digital-in-02"/>
-    <led halpin="digital-in-03"/>
-    <led halpin="digital-in-04"/>
-    <led halpin="digital-in-05"/>
-<tablerow/>
-    <label text="digital-out-00" font="helvetica -12 bold"/>
-    <label text="digital-out-01" font="helvetica -12 bold"/>
-    <label text="digital-out-02" font="helvetica -12 bold"/>
-<tablerow/>
-    <checkbutton halpin="digital-out-00"/>
-    <checkbutton halpin="digital-out-01"/>
-    <checkbutton halpin="digital-out-02"/>
-<tablerow/>
-    <label text="analog-in-00" font="helvetica -12 bold"/>
-    <label text="analog-in-01" font="helvetica -12 bold"/>
-<tablerow/>
-    <number halpin="analog-in-00" format="-1.4f"/>
-    <number halpin="analog-in-01" format="-1.4f"/>
-<tablerow/>
-    <bar halpin="analog-in-00b" min_="0" max_="5"/>
-    <bar halpin="analog-in-01b" min_="0" max_="5"/>
-<tablerow/>
-    <label text="analog-out-00" font="helvetica -12 bold"/>
-    <label text="analog-out-01" font="helvetica -12 bold"/>
-    <label text="analog-out-02" font="helvetica -12 bold"/>
-<tablerow/>
-    <scale resolution="0.1" halpin="analog-out-00" min_="0" max_="5" orient="h"/>
-    <scale resolution="0.1" halpin="analog-out-01" min_="0" max_="5" orient="h"/>
-    <scale resolution="0.1" halpin="analog-out-02" min_="0" max_="5" orient="h"/>
-</table>
+
+  <hbox>
+    <relief>GROOVE</relief>
+    <bd>4</bd>
+          <checkbutton halpin="digital-out-00"/>
+          <label text="digital-out-00" font="helvetica -12 bold"/>
+
+          <checkbutton halpin="digital-out-01"/>
+          <label text="digital-out-01" font="helvetica -12 bold"/>
+
+          <checkbutton halpin="digital-out-02"/>
+          <label text="digital-out-02" font="helvetica -12 bold"/>
+
+          <checkbutton halpin="digital-out-03"/>
+          <label text="digital-out-03" font="helvetica -12 bold"/>
+
+          <checkbutton halpin="digital-out-04"/>
+          <label text="digital-out-04" font="helvetica -12 bold"/>
+
+          <checkbutton halpin="digital-out-05"/>
+          <label text="digital-out-05" font="helvetica -12 bold"/>
+
+          <checkbutton halpin="digital-out-06"/>
+          <label text="digital-out-06" font="helvetica -12 bold"/>
+  </hbox>
+  <tablerow/>
+  <hbox>
+    <table>
+      <tablesticky sticky="n"/>
+      <tablerow/>
+       <hbox>
+       <hbox>
+        <relief>GROOVE</relief>
+        <bd>4</bd>
+      <label text="analog-in-00" font="helvetica -12 bold"/>
+      <number halpin="analog-in-00" format="-1.4f"/>
+      <label text="Volt"/>
+         <meter halpin="analog-in-00b" min_="0" max_="100" subtext="%" size="160"/>
+      </hbox>
+      <hbox>
+        <relief>GROOVE</relief>
+        <bd>4</bd>
+      <label text="  analog-in-01" font="helvetica -12 bold"/>
+      <number halpin="analog-in-01" format="-1.4f"/>
+      <label text="Volt"/>
+         <meter halpin="analog-in-01b" min_="0" max_="100" subtext="%" size="160"/>
+      </hbox>
+       </hbox>
+
+      <tablerow/>
+       <hbox>
+        <relief>GROOVE</relief>
+        <bd>4</bd>
+      <label text="analog-out-00" font="helvetica -12 bold"/>
+      <scale resolution="0.01" halpin="analog-out-00" min_="0" max_="10" orient="h"/>
+      </hbox>
+    </table>
+  </hbox>
+
+  </table>
 </pyvcp>
