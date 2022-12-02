@@ -50,11 +50,12 @@
 #define MAXDELAY 30
 
 uint8_t sbuf[8];
-int pinIn[]     = { 12, 11, 10,  8, A0, A1, A2, A3 }; // pin list digital input 
-int inActive[]  = {  0,  0,  0,  0,  0,  0,  0,  0 }; // 1=Active HIGH; 0=Active LOW 
-int pinOut[]    = {  7,  6,  5,  4,  3,  2, 13 }; // pin list digital output 
-int anaIn[]     = { A6, A7 }; // pin list analog input
-int anaOut[]    = {  9 }; // pin list analog output 
+int pinIn[]        = { 12, 11, 10,  8, A0, A1, A2, A3 }; // pin list digital input 
+int inActive[]     = {  0,  0,  0,  0,  0,  0,  0,  0 }; // 1=Active HIGH; 0=Active LOW 
+int pinOut[]       = {  7,  6,  5,  4,  3,  2, 13 }; // pin list digital output 
+int pinInitState[] = {  0,  0,  0,  0,  0,  0,  1 }; // state of the output pins on initialization
+int anaIn[]        = { A6, A7 }; // pin list analog input
+int anaOut[]       = {  9 }; // pin list analog output 
 
 int ack=0;
 unsigned int ind = 0;
@@ -81,7 +82,11 @@ void setup() {
   maxWrite = sizeof(pinOut) / sizeof(int);
   for (int i=0; i<maxWrite; i++){
     pinMode(pinOut[i], OUTPUT);   // set pin to output 
-    digitalWrite(pinOut[i], LOW); // turn off pin 
+    if (pinInitState[i]) {
+      digitalWrite(pinOut[i], HIGH); // turn on pin 
+    } else {
+      digitalWrite(pinOut[i], LOW); // turn off pin 
+    }
   }
 
   // set analog input pins
