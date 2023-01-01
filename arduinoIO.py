@@ -26,10 +26,13 @@ import serial
 import sys
 import time
 
-PORT = "/dev/ttyUSB0" # for Arduino Duemilanove/UNO
-#PORT = "/dev/ttyACM0" # for Arduino MEGA 2560 
+#PORT = "/dev/ttyUSB0" # for Arduino Duemilanove/UNO
+PORT = "/dev/ttyACM0" # for Arduino MEGA 2560 
 BAUD = 115200
 TIMEOUT = 2
+
+if len(sys.argv) > 1:
+    PORT = sys.argv[1]
 
 nInput = 8         # input pins available on arduino 
 nOutput = 7        # output pins available on arduino 
@@ -58,7 +61,7 @@ stateLed = 0
 analogCh = 0
 analogVal = 0
 
-if (inLinuxCNC):
+if inLinuxCNC:
     import hal
     hc = hal.component("arduinoIO")
     # digital in 
@@ -101,8 +104,9 @@ def writeBuffer():
     else:
         for b in bufW:
             ser.write(b.to_bytes(1, byteorder='big'))
-    # sleep a little bit :-)
-    time.sleep(0.02)
+    
+    # sleep a little bit :-) otherwise sending data sometimes not successful
+    time.sleep(0.05)
     
     # debug
     if printDebug:
@@ -119,7 +123,7 @@ def setDigitalIn():
     bits = (bits << 8) | (bufR[4] & 0xFF)
     bits = (bits << 8) | (bufR[3] & 0xFF)
     bits = (bits << 8) | (bufR[2] & 0xFF)
-    if (inLinuxCNC):
+    if inLinuxCNC:
         for i in range(nInput):
             hc['digital-in-%02d' % i] = ((bits & (0x01 << i)) != 0)
             hc['digital-in-%02d-not' % i] = ((bits & (0x01 << i)) == 0)
@@ -164,6 +168,20 @@ def sendDigitalOut():
             bufW[2] = (bufW[2] & ~(0x01 << i))
     # send to arduino
     writeBuffer()
+    # debug
+    if printDebug:
+        print("DigitalOut:", end=' ')
+        for i in range(nOutput):
+            if (i < 8):
+                print(((bufW[2] & (0x01 << i)) >> i), end='')
+            elif (i < 16):
+                print(((bufW[3] & (0x01 << (i-8))) >> (i-8)), end='')
+            elif (i < 24):
+                print(((bufW[3] & (0x01 << (i-16))) >> (i-16)), end='')
+            elif (i < 32):
+                print(((bufW[3] & (0x01 << (i-24))) >> (i-24)), end='')
+        print()
+
 
 
 # set analog pins value in LinuxCNC
@@ -178,7 +196,7 @@ def setAnalogIn():
     # extract 2st analog value
     val2 = ((((bufR[4] & 0x3) * 256) + (bufR[5] & 0xFF)) & 0x3FF)
     
-    if (inLinuxCNC):
+    if inLinuxCNC:
         # set value in LinuxCNC
         # ch1
         if (ch1 < nAnalogIn):
@@ -213,8 +231,11 @@ def sendAnalogOut(ch):
     scale = hc['analog-out-%02d-scale' % ch] or 1.0
     offset = hc['analog-out-%02d-offset' % ch]
     data = (hc['analog-out-%02d' % ch] - offset) / scale / (5.0)
+    #print("AnalogOut " + str(data))
+
     bufW[2] = ch
     bufW[3] = int((data * 255) + 0.5)
+    #print("  AnalogOut " + str(bufW[0]) + " " + str(bufW[1]) + " " + str(bufW[2]) + " " + str(bufW[3]) + " " + str(bufW[4]) + " " + str(bufW[5]))
     if ((ch + 1) < nAnalogOut):
         # get analog value of channel (ch + 1)
         scale = hc['analog-out-%02d-scale' % (ch + 1)] or 1.0
@@ -225,7 +246,7 @@ def sendAnalogOut(ch):
     # send to arduino
     writeBuffer()
     # debug
-    if (printDebug):
+    if printDebug:
         print("AnalogOut ch=" + str(bufW[2]) + " val=" + str(bufW[3]))
         print("AnalogOut ch=" + str(bufW[4]) + " val=" + str(bufW[5]))
 
@@ -286,7 +307,7 @@ try:
                 bufR=[]
         # end while
 
-        if (inLinuxCNC):
+        if inLinuxCNC:
             # send digital pin stat to arduino
             sendDigitalOut()
 
@@ -303,7 +324,7 @@ try:
             # blink LED 
             if ((now - digitalTime) > 0.5):
                 # change LED state
-                stateLed = 0x00 if stateLed else 0x01 
+                stateLed = 0b0 if stateLed else 0b1000000 # 0b1000000 = 0x40 = 64 
                 bufW[0] = START
                 bufW[1] = WRITEDIG
                 bufW[2] = stateLed 
@@ -324,7 +345,7 @@ try:
                 bufW[5] = (0x00)
                 writeBuffer()
                 print('PWM = {:3d} Volt = {:3.3}'.format(analogVal, (analogVal / 255 * 5.0)))
-                analogVal += 12
+                analogVal += 15
                 if (analogVal > 255):
                     analogVal = 0
                 analogTime = time.time()
@@ -332,7 +353,7 @@ try:
             time.sleep(0.1)
 
 except (KeyboardInterrupt,):
-    if (inLinuxCNC):
+    if inLinuxCNC:
         raise SystemExit
     else:
         print("Exit")
