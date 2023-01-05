@@ -100,7 +100,7 @@ void setup() {
 
   // set analog output pins 
   maxAnaWrite = sizeof(anaOut) / sizeof(int);
-  for (int i=0; i<sizeof(anaOut); i++){
+  for (int i=0; i<maxAnaWrite; i++){
     pinMode(anaOut[i], OUTPUT);   // set pin to output 
   }
 

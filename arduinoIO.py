@@ -3,7 +3,7 @@
 #
 #    HAL userspace component to interface with Arduino board for IO
 #
-#    Copyright (C) 2022 Dino del Favero <dino@mesina.net>
+#    Copyright (C) 2022/2023 Dino del Favero <dino@mesina.net>
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -52,7 +52,7 @@ WRITEDIG = 0x01
 READANA  = 0x02
 WRITEANA = 0x02
 
-bufR = [] # buffer read
+bufR = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00] # buffer read
 bufW = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00] # buffer write
 ack = False
 digitalTime = 0
@@ -106,7 +106,7 @@ def writeBuffer():
             ser.write(b.to_bytes(1, byteorder='big'))
     
     # sleep a little bit :-) otherwise sending data sometimes not successful
-    time.sleep(0.05)
+    time.sleep(0.050)
     
     # debug
     if printDebug:
@@ -222,27 +222,25 @@ def sendAnalogOut(ch):
     # set buffer 
     bufW[0] = START
     bufW[1] = WRITEANA
-    bufW[2] = 0xFF # channel 255 do not exist if set to 0 arduino will set it in output
+    bufW[2] = 0xF0 # channel 240 do not exist (if I set to 0 arduino will set it in output)
     bufW[3] = 0x00
-    bufW[4] = 0xFF # channel 255 do not exist if set to 0 arduino will set it in output
+    bufW[4] = 0xF0 # channel 240 do not exist (if I set to 0 arduino will set it in output)
     bufW[5] = 0x00
     
     # get analog value of channel ch 
     scale = hc['analog-out-%02d-scale' % ch] or 1.0
     offset = hc['analog-out-%02d-offset' % ch]
-    data = (hc['analog-out-%02d' % ch] - offset) / scale / (5.0)
-    #print("AnalogOut " + str(data))
-
+    data = ((hc['analog-out-%02d' % ch] - offset) / scale) / 5.0 * 255.0
     bufW[2] = ch
-    bufW[3] = int((data * 255) + 0.5)
-    #print("  AnalogOut " + str(bufW[0]) + " " + str(bufW[1]) + " " + str(bufW[2]) + " " + str(bufW[3]) + " " + str(bufW[4]) + " " + str(bufW[5]))
+    bufW[3] = int(round(data))
+
     if ((ch + 1) < nAnalogOut):
         # get analog value of channel (ch + 1)
         scale = hc['analog-out-%02d-scale' % (ch + 1)] or 1.0
         offset = hc['analog-out-%02d-offset' % (ch + 1)]
-        data = (hc['analog-out-%02d' % (ch + 1)]- offset) / scale / (5.0)
+        data = ((hc['analog-out-%02d' % (ch + 1)]- offset) / scale) / 5.0 * 255.0
         bufW[4] = ch + 1
-        bufW[5] = int((data * 255) + 0.5)
+        bufW[5] = int(round(data))
     # send to arduino
     writeBuffer()
     # debug
@@ -310,7 +308,8 @@ try:
         if inLinuxCNC:
             # send digital pin stat to arduino
             sendDigitalOut()
-
+            lastTime = time.time()
+                
             # send analog pin value to arduino
             if (nAnalogOut > 0):
                 sendAnalogOut(analogCh)
@@ -318,7 +317,7 @@ try:
                 analogCh += 2
                 if (analogCh >= nAnalogOut):
                     analogCh = 0
-
+            
         else:
             now = time.time()
             # blink LED 
@@ -344,7 +343,7 @@ try:
                 bufW[4] = (0xFF)
                 bufW[5] = (0x00)
                 writeBuffer()
-                print('PWM = {:3d} Volt = {:3.3}'.format(analogVal, (analogVal / 255 * 5.0)))
+                print('PWM = {:3d} Volt = {:3.3}'.format(analogVal, (analogVal / 255.0 * 5.0)))
                 analogVal += 15
                 if (analogVal > 255):
                     analogVal = 0

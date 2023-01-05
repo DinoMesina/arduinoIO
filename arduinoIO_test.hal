@@ -1,4 +1,4 @@
-loadusr -W arduinoIO /dev/ttyUSB0
+loadusr -W arduinoIO 
 loadusr -Wn arduinoIO-vcp pyvcp arduinoIO-vcp.xml
 
 loadrt threads period1=1000000 name1=thread
@@ -34,7 +34,8 @@ setp scale.1.offset 0.0
 net ain1 arduinoIO.analog-in-01 => arduinoIO-vcp.analog-in-01 scale.1.in
 net ain1perc scale.1.out => arduinoIO-vcp.analog-in-01b
 
-net aout0 arduinoIO.analog-out-00 => arduinoIO-vcp.analog-out-00-f
+net aout0 arduinoIO.analog-out-00 <= arduinoIO-vcp.analog-out-00-f
 setp arduinoIO.analog-out-00-scale 2.0
 
 waitusr arduinoIO-vcp
+
