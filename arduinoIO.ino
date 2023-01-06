@@ -48,15 +48,15 @@
 
 #define BAUD 115200
 
-#define MAXDELAY 50     // max time to wait 
-#define ANALOGREADS 20  // how many times do I have to read the analog data
+#define MAXDELAY 100    // max time to wait in millis 
+#define ANALOGREADS 20  // how many times do I have to read the analog data 
 
 int pinIn[]        = { 12, 11, 10,  8, A0, A1, A2, A3 }; // pin list digital input 
 int inActive[]     = {  0,  0,  0,  0,  0,  0,  0,  0 }; // 1=Active HIGH; 0=Active LOW 
 int pinOut[]       = {  7,  6,  5,  4,  3,  2, 13 }; // pin list digital output 
-int pinInitState[] = {  1,  1,  1,  1,  1,  1,  1 }; // state of the output pins on initialization
-int pinOutInvert[] = {  1,  1,  1,  1,  1,  1,  1 }; // 1=Invert state
-int anaIn[]        = { A6, A7 }; // pin list analog input
+int pinInitState[] = {  1,  1,  1,  1,  1,  1,  1 }; // state of the output pins on initialization 
+int pinOutInvert[] = {  1,  1,  1,  1,  1,  1,  1 }; // 1=Invert state 
+int anaIn[]        = { A6, A7 }; // pin list analog input 
 int anaOut[]       = {  9 }; // pin list analog output 
 
 int ack=0;
@@ -109,7 +109,7 @@ void setup() {
 void loop() {
   uint16_t sum = 0;
   // read data from serial
-  while (Serial.available() > 0) {
+  while ((Serial.available() > 0) && (ind < 8)) {
     sbuf[ind] = Serial.read();
     if ((ind < 8) && (sbuf[0] == START)){
       ind++;

@@ -3,7 +3,7 @@
 #
 #    HAL userspace component to interface with Arduino board for IO
 #
-#    Copyright (C) 2022/2023 Dino del Favero <dino@mesina.net>
+#    Copyright (C) 2022-2023 Dino del Favero <dino@mesina.net>
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@ from __future__ import print_function
 import serial
 import sys
 import time
+import os 
 
 #PORT = "/dev/ttyUSB0" # for Arduino Duemilanove/UNO
 PORT = "/dev/ttyACM0" # for Arduino MEGA 2560 
@@ -39,8 +40,8 @@ nOutput = 7        # output pins available on arduino
 nAnalogIn = 2      # input analog pins available on arduino 
 nAnalogOut = 1     # output analog pins available on arduino 
 
-printDebug = False
-inLinuxCNC = True
+printDebug = not False
+inLinuxCNC = not True
 
 ser = serial.Serial()
 
@@ -61,9 +62,11 @@ stateLed = 0
 analogCh = 0
 analogVal = 0
 
+waitingTime = 0.040  # initial waiting time after sending bytes 
+
 if inLinuxCNC:
     import hal
-    hc = hal.component("arduinoIO")
+    hc = hal.component(os.path.basename(__file__))
     # digital in 
     for n in range(nInput):
         hc.newpin("digital-in-%02d" % n, hal.HAL_BIT, hal.HAL_OUT)
@@ -106,11 +109,11 @@ def writeBuffer():
             ser.write(b.to_bytes(1, byteorder='big'))
     
     # sleep a little bit :-) otherwise sending data sometimes not successful
-    time.sleep(0.005)
+    time.sleep(waitingTime)
     
     # debug
     if printDebug:
-        print("W-->:", end='  ')
+        print("{} W-->:".format(os.path.basename(__file__)), end='  ')
         for b in bufW:
             print(str("{0:0=8b}".format(b)), end='  ')
         print()
@@ -128,7 +131,7 @@ def setDigitalIn():
             hc['digital-in-%02d' % i] = ((bits & (0x01 << i)) != 0)
             hc['digital-in-%02d-not' % i] = ((bits & (0x01 << i)) == 0)
     if printDebug:
-        print("DigitalIn:", end=' ')
+        print("{} DigitalIn: ".format(os.path.basename(__file__)), end=' ')
         for i in range(nInput):
             print(((bits & (0x01 << i)) >> i), end='')
         print()
@@ -170,7 +173,7 @@ def sendDigitalOut():
     writeBuffer()
     # debug
     if printDebug:
-        print("DigitalOut:", end=' ')
+        print("{} DigitalOut: ".format(os.path.basename(__file__)), end=' ')
         for i in range(nOutput):
             if (i < 8):
                 print(((bufW[2] & (0x01 << i)) >> i), end='')
@@ -209,8 +212,8 @@ def setAnalogIn():
             offset = hc['analog-in-%02d-offset' % ch2]
             hc['analog-in-%02d' % ch2] = val2 / 1023.0 * 5.0 * gain + offset
     if printDebug:
-        print("AnalogIn ch: " + str(ch1) + " val: " + str(val1))
-        print("AnalogIn ch: " + str(ch2) + " val: " + str(val2))
+        print("{} AnalogIn ch: {} val: {}".format(os.path.basename(__file__), ch1, val1))
+        print("{} AnalogIn ch: {} val: {}".format(os.path.basename(__file__), ch2, val2))
         print()
 
 
@@ -222,9 +225,9 @@ def sendAnalogOut(ch):
     # set buffer 
     bufW[0] = START
     bufW[1] = WRITEANA
-    bufW[2] = 0xF0 # channel 240 do not exist (if I set to 0 arduino will set it in output)
+    bufW[2] = 0xFF # channel 256 do not exist (if setted to 0 arduino will set the output of the first channel to 0)
     bufW[3] = 0x00
-    bufW[4] = 0xF0 # channel 240 do not exist (if I set to 0 arduino will set it in output)
+    bufW[4] = 0xFF # channel 256 do not exist (if setted to 0 arduino will set the output of the first channel to 0)
     bufW[5] = 0x00
     
     # get analog value of channel ch 
@@ -245,8 +248,8 @@ def sendAnalogOut(ch):
     writeBuffer()
     # debug
     if printDebug:
-        print("AnalogOut ch=" + str(bufW[2]) + " val=" + str(bufW[3]))
-        print("AnalogOut ch=" + str(bufW[4]) + " val=" + str(bufW[5]))
+        print("{} AnalogOut ch: {} val: {}".format(os.path.basename(__file__), bufW[2], bufW[3]))
+        print("{} AnalogOut ch: {} val: {}".format(os.path.basename(__file__), bufW[4], bufW[5]))
 
 
 try:
@@ -258,7 +261,7 @@ try:
     ser.timeout = TIMEOUT
     ser.open()
     # wait Arduino reset completed
-    time.sleep(1.5)
+    time.sleep(2.0)
     # do forever
     while True:
         # read serial from arduino
@@ -269,11 +272,13 @@ try:
             if ((byte == ACK) and (len(bufR) == 1)):
                 ack = True
                 if printDebug:
-                    print("R<--:ACK")
+                    print("{} R<--:ACK".format(os.path.basename(__file__)))
+
             elif ((byte == NACK) and (len(bufR) == 1)):
                 ack = False
+                waitingTime += 0.002
                 if printDebug:
-                    print("R<--:NACK")
+                    print("{} R<--:NACK\n    waitingTime={:f}".format(os.path.basename(__file__), waitingTime))
             # if the first byte is not the start byte clear the buffer 
             if (bufR[0] != START):
                 bufR = []
@@ -288,7 +293,7 @@ try:
                     # OK :) received good
                     # debug
                     if printDebug:
-                        print("R<--:", end='  ')
+                        print("{} R<--:".format(os.path.basename(__file__)), end='  ')
                         for b in bufR:
                             print(str("{0:0=8b}".format(b)), end='  ')
                         print()
