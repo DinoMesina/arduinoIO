@@ -1,5 +1,5 @@
 /*
- *   Copyright (C) 2022 Dino del Favero <dino@mesina.net>
+ *   Copyright (C) 2022-2023 Dino del Favero <dino@mesina.net>
  *   
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@
  *   read/write digital pin 
  *   (32bit pin mask MSB..LSB MSB..LSB MSB..LSB MSB..LSB : MSB=8th pin LSB=1st pin)
  * command 2:
- *   read/write analogical pin 
+ *   read/write analog pin 
  *   (32bit xxxxxxyy yyyyyyyy uuuuuuvv vvvvvvvv : x|u=channel y|v=value)
  * 
  */
@@ -84,18 +84,18 @@ void setup() {
   // set digital output pins 
   maxWrite = sizeof(pinOut) / sizeof(int);
   for (int i=0; i<maxWrite; i++){
-    pinMode(pinOut[i], OUTPUT);   // set pin to output 
+    pinMode(pinOut[i], OUTPUT);      // set pin to output 
     if (pinInitState[i]) {
       digitalWrite(pinOut[i], HIGH); // turn on pin 
     } else {
-      digitalWrite(pinOut[i], LOW); // turn off pin 
+      digitalWrite(pinOut[i], LOW);  // turn off pin 
     }
   }
 
   // set analog input pins
   maxAnaRead = sizeof(anaIn) / sizeof(int);
   for (int i=0; i<maxAnaRead; i++){
-    pinMode(anaIn[i], INPUT);      // set pin to input 
+    pinMode(anaIn[i], INPUT);     // set pin to input 
   }
 
   // set analog output pins 
@@ -137,10 +137,10 @@ void loop() {
       // do command 
       switch (sbuf[1]) {
         case WRITEDIG:
-          writeDig(); // write digital pin
+          writeDig(); // write digital pins 
           break;
         case WRITEANA:
-          writeAna(); // write analog pin
+          writeAna(); // write analog pins 
           break;
       }
             
@@ -151,7 +151,7 @@ void loop() {
   }
 
   // have to update the data?
-  if (ack or (millis() - lastSend >= MAXDELAY)) {
+  if (ack or (millis() - lastSend > MAXDELAY)) {
     // read the digital input pins
     if (maxRead > 0) {
       readDig();
@@ -227,7 +227,7 @@ void readAna(int p) {
   int i;
   if (p >= maxAnaRead)
     return;
-  uint8_t output[] = { 0xFF, 0x00, 0xFF, 0x00 };
+  uint8_t output[] = { 0xF0, 0x00, 0xF0, 0x00 };
   uint16_t analog = 0;
   
   // first analog 
@@ -276,6 +276,7 @@ void readAna(int p) {
  */
 void writeAna() {
   int pwm;
+  
   // first PWM 
   if (sbuf[2] < maxAnaWrite) {
     pwm = sbuf[3];
