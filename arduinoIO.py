@@ -40,8 +40,8 @@ nOutput = 7        # output pins available on arduino
 nAnalogIn = 2      # input analog pins available on arduino 
 nAnalogOut = 1     # output analog pins available on arduino 
 
-printDebug = not False
-inLinuxCNC = not True
+printDebug = False
+inLinuxCNC = True
 
 ser = serial.Serial()
 
@@ -273,7 +273,6 @@ try:
                 ack = True
                 if printDebug:
                     print("{} R<--:ACK".format(os.path.basename(__file__)))
-
             elif ((byte == NACK) and (len(bufR) == 1)):
                 ack = False
                 waitingTime += 0.002
