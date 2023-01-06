@@ -106,7 +106,7 @@ def writeBuffer():
             ser.write(b.to_bytes(1, byteorder='big'))
     
     # sleep a little bit :-) otherwise sending data sometimes not successful
-    time.sleep(0.050)
+    time.sleep(0.005)
     
     # debug
     if printDebug:
