@@ -81,13 +81,16 @@ if inLinuxCNC:
         hc.newpin("analog-in-%02d" % n, hal.HAL_FLOAT, hal.HAL_OUT)
         hc.newparam("analog-in-%02d-offset" % n, hal.HAL_FLOAT, hal.HAL_RW)
         hc.newparam("analog-in-%02d-gain" % n, hal.HAL_FLOAT, hal.HAL_RW)
-        hc['analog-in-%02d-gain' % n] = 1.0
+        hc["analog-in-%02d-gain" % n] = 1.0
     # analog out
     for n in range(nAnalogOut):
         hc.newpin("analog-out-%02d" % n, hal.HAL_FLOAT, hal.HAL_IN)
         hc.newparam("analog-out-%02d-offset" % n, hal.HAL_FLOAT, hal.HAL_RW)
         hc.newparam("analog-out-%02d-scale" % n, hal.HAL_FLOAT, hal.HAL_RW)
-        hc['analog-out-%02d-scale' % n] = 1.0
+        hc["analog-out-%02d-scale" % n] = 1.0
+    # waitingTime
+    hc.newpin("waiting-time", hal.HAL_FLOAT, hal.HAL_OUT)
+    hc["waiting-time"] = waitingTime 
     # READY 
     hc.ready()
 
@@ -109,7 +112,10 @@ def writeBuffer():
             ser.write(b.to_bytes(1, byteorder='big'))
     
     # sleep a little bit :-) otherwise sending data sometimes not successful
-    time.sleep(waitingTime)
+    if inLinuxCNC:
+        time.sleep(hc["waiting-time"])
+    else:
+        time.sleep(waitingTime)
     
     # debug
     if printDebug:
@@ -275,9 +281,14 @@ try:
                     print("{} R<--:ACK".format(os.path.basename(__file__)))
             elif ((byte == NACK) and (len(bufR) == 1)):
                 ack = False
-                waitingTime += 0.002
-                if printDebug:
-                    print("{} R<--:NACK\n    waitingTime={:f}".format(os.path.basename(__file__), waitingTime))
+                if inLinuxCNC:
+                    hc["waiting-time"] += 0.001
+                    if printDebug:
+                        print("{} R<--:NACK\n    waitingTime={:f}".format(os.path.basename(__file__), hc["waiting-time"]))
+                else:
+                    waitingTime += 0.001
+                    if printDebug:
+                        print("{} R<--:NACK\n    waitingTime={:f}".format(os.path.basename(__file__), waitingTime))
             # if the first byte is not the start byte clear the buffer 
             if (bufR[0] != START):
                 bufR = []
@@ -355,8 +366,8 @@ try:
             # sleep a bit 
             time.sleep(0.1)
 
-except (KeyboardInterrupt,):
+except Exception as e:
+    print("{}: caught {}".format(os.path.basename(__file__), e))
     if inLinuxCNC:
         raise SystemExit
-    else:
-        print("Exit")
+
