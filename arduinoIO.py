@@ -240,6 +240,10 @@ def sendAnalogOut(ch):
     scale = hc['analog-out-%02d-scale' % ch] or 1.0
     offset = hc['analog-out-%02d-offset' % ch]
     data = ((hc['analog-out-%02d' % ch] - offset) / scale) / 5.0 * 255.0
+    if (data < 0.0):
+        data = 0.0 
+    if (data > 255.0):
+        data = 255.0
     bufW[2] = ch
     bufW[3] = int(round(data))
 
@@ -248,6 +252,10 @@ def sendAnalogOut(ch):
         scale = hc['analog-out-%02d-scale' % (ch + 1)] or 1.0
         offset = hc['analog-out-%02d-offset' % (ch + 1)]
         data = ((hc['analog-out-%02d' % (ch + 1)]- offset) / scale) / 5.0 * 255.0
+        if (data < 0.0):
+            data = 0.0 
+        if (data > 255.0):
+            data = 255.0
         bufW[4] = ch + 1
         bufW[5] = int(round(data))
     # send to arduino
