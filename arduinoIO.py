@@ -112,10 +112,7 @@ def writeBuffer():
             ser.write(b.to_bytes(1, byteorder='big'))
     
     # sleep a little bit :-) otherwise sending data sometimes not successful
-    if inLinuxCNC:
-        time.sleep(hc["waiting-time"])
-    else:
-        time.sleep(waitingTime)
+    time.sleep(waitingTime)
     
     # debug
     if printDebug:
@@ -289,14 +286,11 @@ try:
                     print("{} R<--:ACK".format(os.path.basename(__file__)))
             elif ((byte == NACK) and (len(bufR) == 1)):
                 ack = False
+                waitingTime += 0.001
                 if inLinuxCNC:
-                    hc["waiting-time"] += 0.001
-                    if printDebug:
-                        print("{} R<--:NACK\n    waitingTime={:f}".format(os.path.basename(__file__), hc["waiting-time"]))
-                else:
-                    waitingTime += 0.001
-                    if printDebug:
-                        print("{} R<--:NACK\n    waitingTime={:f}".format(os.path.basename(__file__), waitingTime))
+                    hc["waiting-time"] = waitingTime
+                if printDebug:
+                    print("{} R<--:NACK\n    waitingTime={:f}".format(os.path.basename(__file__), waitingTime))
             # if the first byte is not the start byte clear the buffer 
             if (bufR[0] != START):
                 bufR = []
