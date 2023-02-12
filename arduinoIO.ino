@@ -36,6 +36,8 @@
  * 
  */
 
+#define VERSION 1.1_20230212
+
 #define ACK   0b00000110 // ASCII ACK
 #define NACK  0b00010101 // ASCII NAK
 #define START 0b01010011 // ASCII 'S'
@@ -51,8 +53,11 @@
 #define MAXDELAY 100    // max time to wait in millis 
 #define ANALOGREADS 20  // how many times do I have to read the analog data 
 
+#define TIMEOUT 1000    // millis from last received data before reinit IO pins 
+
 int pinIn[]        = { 12, 11, 10,  8, A0, A1, A2, A3 }; // pin list digital input 
 int inActive[]     = {  0,  0,  0,  0,  0,  0,  0,  0 }; // 1=Active HIGH; 0=Active LOW 
+int pinInPullup[]  = {  1,  1,  1,  1,  1,  1,  1,  1 }; // 1=pullup resistor on
 int pinOut[]       = {  7,  6,  5,  4,  3,  2, 13 }; // pin list digital output 
 int pinInitState[] = {  1,  1,  1,  1,  1,  1,  1 }; // state of the output pins on initialization 
 int pinOutInvert[] = {  1,  1,  1,  1,  1,  1,  1 }; // 1=Invert state 
@@ -68,48 +73,20 @@ int maxAnaWrite = 0;
 int indAnaRead = 0;
 
 uint8_t sbuf[8];
-unsigned long lastSend = 0;
+unsigned long lastSended = 0;
+unsigned long lastReceived = 0;
 
 void setup() {
   // initialize the serial communication
   Serial.begin(BAUD);
-
-  // set digital input pins
-  maxRead = sizeof(pinIn) / sizeof(int);
-  for (int i=0; i<maxRead; i++){
-    pinMode(pinIn[i], INPUT);      // set pin to input 
-    digitalWrite(pinIn[i], HIGH);  // turn on pullup resistors 
-  }
-
-  // set digital output pins 
-  maxWrite = sizeof(pinOut) / sizeof(int);
-  for (int i=0; i<maxWrite; i++){
-    pinMode(pinOut[i], OUTPUT);      // set pin to output 
-    if (pinInitState[i]) {
-      digitalWrite(pinOut[i], HIGH); // turn on pin 
-    } else {
-      digitalWrite(pinOut[i], LOW);  // turn off pin 
-    }
-  }
-
-  // set analog input pins
-  maxAnaRead = sizeof(anaIn) / sizeof(int);
-  for (int i=0; i<maxAnaRead; i++){
-    pinMode(anaIn[i], INPUT);     // set pin to input 
-  }
-
-  // set analog output pins 
-  maxAnaWrite = sizeof(anaOut) / sizeof(int);
-  for (int i=0; i<maxAnaWrite; i++){
-    pinMode(anaOut[i], OUTPUT);   // set pin to output 
-  }
-
+  initIO();
 }
 
 void loop() {
   uint16_t sum = 0;
   // read data from serial
   while ((Serial.available() > 0) && (ind < 8)) {
+    lastReceived = millis();
     sbuf[ind] = Serial.read();
     if ((ind < 8) && (sbuf[0] == START)){
       ind++;
@@ -151,7 +128,7 @@ void loop() {
   }
 
   // have to update the data?
-  if (ack or (millis() - lastSend > MAXDELAY)) {
+  if (ack or (millis() - lastSended > MAXDELAY)) {
     // read the digital input pins
     if (maxRead > 0) {
       readDig();
@@ -166,7 +143,48 @@ void loop() {
     }
     // reset vars
     ack = 0;
-    lastSend = millis();
+    lastSended = millis();
+  }
+  // check receive timeout
+  if (millis() - lastReceived > TIMEOUT) {
+    initIO();
+  }
+}
+
+/*
+ * init IO pins 
+ */
+void initIO() {
+  // set digital input pins
+  maxRead = sizeof(pinIn) / sizeof(int);
+  for (int i=0; i<maxRead; i++){
+    pinMode(pinIn[i], INPUT);      // set pin to input 
+    if (pinInPullup[i])
+      digitalWrite(pinIn[i], HIGH);  // turn on pullup resistor 
+  }
+
+  // set digital output pins 
+  maxWrite = sizeof(pinOut) / sizeof(int);
+  for (int i=0; i<maxWrite; i++){
+    pinMode(pinOut[i], OUTPUT);      // set pin to output 
+    if (pinInitState[i]) {
+      digitalWrite(pinOut[i], HIGH); // turn on pin 
+    } else {
+      digitalWrite(pinOut[i], LOW);  // turn off pin 
+    }
+  }
+
+  // set analog input pins
+  maxAnaRead = sizeof(anaIn) / sizeof(int);
+  for (int i=0; i<maxAnaRead; i++){
+    pinMode(anaIn[i], INPUT);     // set pin to input 
+  }
+
+  // set analog output pins 
+  maxAnaWrite = sizeof(anaOut) / sizeof(int);
+  for (int i=0; i<maxAnaWrite; i++){
+    pinMode(anaOut[i], OUTPUT);   // set pin to output 
+    analogWrite(anaOut[i], 0);
   }
 }
 
