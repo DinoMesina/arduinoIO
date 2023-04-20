@@ -150,19 +150,19 @@ def sendDigitalOut():
     bufW[4] = 0x00
     bufW[5] = 0x00
     if (nOutput > 24):
-        for i in range((nOutput if nOutput <= 31 else 31), 23, -1):
+        for i in range(((nOutput - 1) if nOutput <= 31 else 31), 23, -1):
             if ((hc['digital-out-%02d' % i]) == (not hc['digital-out-%02d-invert' % i])):
                 bufW[5] = (bufW[5] | (0x01 << (i - 24)))
             else:
                 bufW[5] = (bufW[5] & ~(0x01 << i))
     if (nOutput > 16):
-        for i in range((nOutput if nOutput <= 23 else 23), 15, -1):
+        for i in range(((nOutput - 1) if nOutput <= 23 else 23), 15, -1):
             if ((hc['digital-out-%02d' % i]) == (not hc['digital-out-%02d-invert' % i])):
                 bufW[4] = (bufW[4] | (0x01 << (i - 16)))
             else:
                 bufW[4] = (bufW[4] & ~(0x01 << i))
     if (nOutput > 8):
-        for i in range((nOutput if nOutput <= 15 else 15), 7, -1):
+        for i in range(((nOutput - 1) if nOutput <= 15 else 15), 7, -1):
             if ((hc['digital-out-%02d' % i]) == (not hc['digital-out-%02d-invert' % i])):
                 bufW[3] = (bufW[3] | (0x01 << (i - 8)))
             else:
